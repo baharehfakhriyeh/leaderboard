@@ -1,5 +1,5 @@
 package com.fkhr.leaderboard.dto.player;
 
-public record UpdatePlayerScore(long id, int score) {
+public record UpdatePlayerScoreDto(long id, int score) {
 
 }
