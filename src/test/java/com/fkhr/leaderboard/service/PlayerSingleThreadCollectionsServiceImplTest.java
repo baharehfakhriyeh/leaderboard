@@ -8,16 +8,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.management.InstanceNotFoundException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
-class PlayerServiceImplTest {
+class PlayerSingleThreadCollectionsServiceImplTest {
 
     private PlayerService playerService;
     CreatePlayerDto createPlayerDto;
 
     @BeforeEach
     public void setUp() {
-        playerService = new PlayerServiceImpl();
+        playerService = new PlayerSingleThreadCollectionsServiceImpl();
         createPlayerDto = new CreatePlayerDto(1, "Baharh");
     }
 
@@ -58,7 +58,7 @@ class PlayerServiceImplTest {
         playerService.create(createPlayerDto);
         createPlayerDto = new CreatePlayerDto(3, "Dorna");
         playerService.create(createPlayerDto);
-        ConcurrentHashMap<Long, Player> result = (ConcurrentHashMap<Long, Player>) playerService.getPlayers();
+        HashMap<Long, Player> result = (HashMap<Long, Player>) playerService.getPlayers();
         Assertions.assertThat(result).size().isEqualTo(count);
         for (int i = 1; i <= count; i++) {
             Assertions.assertThat(result.keySet()).contains((long) i);
@@ -82,4 +82,8 @@ class PlayerServiceImplTest {
                 () -> playerService.getPlayerById(id));
         Assertions.assertThat(result).isInstanceOf(InstanceNotFoundException.class);
     }
+
+
+
+
 }

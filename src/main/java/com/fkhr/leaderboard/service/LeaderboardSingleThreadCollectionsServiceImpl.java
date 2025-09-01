@@ -3,35 +3,30 @@ package com.fkhr.leaderboard.service;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceNotFoundException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentNavigableMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service("leaderboard_thread_safe")
-@Primary
-public class LeaderboardServiceImpl implements LeaderboardService {
-    private static ConcurrentSkipListMap<Integer, LinkedList<Player>> leaderboardPlayers;
-
+@Service("leaderboard_single_thread")
+public class LeaderboardSingleThreadCollectionsServiceImpl implements LeaderboardService{
+    private static TreeMap<Integer, LinkedList<Player>> leaderboardPlayers;
     static {
-        leaderboardPlayers = new ConcurrentSkipListMap<>(Collections.reverseOrder());
+        leaderboardPlayers = new TreeMap<>(Collections.reverseOrder());
+
     }
 
     private final PlayerService playerService;
 
-    public LeaderboardServiceImpl(PlayerService playerService) throws InstanceNotFoundException {
+    public LeaderboardSingleThreadCollectionsServiceImpl(@Qualifier("player_single_thread") PlayerService playerService) throws InstanceNotFoundException {
         this.playerService = playerService;
         this.fillDataSet();
-        setLeaderboardPlayers();
     }
 
     @Override
-    public List<Player> getTopNPlayers(int count) {
+    public synchronized List<Player> getTopNPlayers(int count) {
         List<Player> playerList = new ArrayList<>();
         AtomicInteger counter = new AtomicInteger(count);
         Iterator<LinkedList<Player>> leaderboardIt = leaderboardPlayers.values().iterator();
@@ -57,16 +52,17 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
     @Override
     public List<Player> getPlayersByRangeOfScore(int minScore, int maxScore) {
-        ConcurrentNavigableMap<Integer, LinkedList<Player>> subMapLeaderboard =
+        setLeaderboardPlayers();
+        NavigableMap<Integer, LinkedList<Player>> subMapLeaderboard =
                 leaderboardPlayers.subMap(maxScore, true, minScore, true);
         List<Player> players = new ArrayList<>();
-        subMapLeaderboard.values().forEach(v -> players.addAll(v));
+        subMapLeaderboard.values().forEach(v->players.addAll(v));
         return players;
     }
 
-    private synchronized void setLeaderboardPlayers() {
+    private synchronized void setLeaderboardPlayers(){
         if (leaderboardPlayers.isEmpty()) {
-            ConcurrentHashMap<Long, Player> playersMap = (ConcurrentHashMap<Long, Player>) playerService.getPlayers();
+            HashMap<Long, Player> playersMap = (HashMap<Long, Player>) playerService.getPlayers();
             playersMap.forEach(
                     (k, v) -> {
                         if (leaderboardPlayers.containsKey(v.getScore())) {
@@ -77,16 +73,16 @@ public class LeaderboardServiceImpl implements LeaderboardService {
                     }
             );
         }
+
     }
 
     /**
      * Initialisation. //todo: remove if it became a real project.
-     *
      * @throws InstanceNotFoundException
      */
     public synchronized void fillDataSet() throws InstanceNotFoundException {
         List<Player> players = playerService.getPlayers().values().stream().toList();
-        if (players.isEmpty()) {
+        if(players.isEmpty()) {
             playerService.create(new CreatePlayerDto(1, "Bahareh"));
             playerService.create(new CreatePlayerDto(2, "Mark"));
             playerService.create(new CreatePlayerDto(3, "Dorna"));

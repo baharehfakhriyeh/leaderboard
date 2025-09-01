@@ -6,10 +6,12 @@ import com.fkhr.leaderboard.model.Player;
 
 import javax.management.InstanceNotFoundException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface PlayerService {
     Player create(CreatePlayerDto createPlayerDto);
     Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException;
-    HashMap<Long, Player> getPlayers();
+    Map<Long, Player> getPlayers();
     Player getPlayerById(long id) throws InstanceNotFoundException;
 }

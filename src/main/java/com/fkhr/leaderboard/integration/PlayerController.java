@@ -1,4 +1,4 @@
-package com.fkhr.leaderboard.controller;
+package com.fkhr.leaderboard.integration;
 
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;

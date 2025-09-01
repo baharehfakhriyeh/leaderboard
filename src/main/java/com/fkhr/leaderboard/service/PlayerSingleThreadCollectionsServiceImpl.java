@@ -4,23 +4,20 @@ import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceNotFoundException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
-@Service("player_thread_safe")
-@Primary
-public class PlayerServiceImpl implements PlayerService {
-    public static ConcurrentHashMap<Long, Player> players;
+@Service("player_single_thread")
+public class PlayerSingleThreadCollectionsServiceImpl implements PlayerService {
+    public static HashMap<Long, Player> players;
 
     static {
-        players = new ConcurrentHashMap<>();
+        players = new HashMap<>();
     }
 
-    public PlayerServiceImpl() {
+    public PlayerSingleThreadCollectionsServiceImpl() {
     }
 
     @Override
@@ -46,7 +43,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public ConcurrentHashMap<Long, Player> getPlayers() {
+    public HashMap<Long, Player> getPlayers() {
         return players;
     }
 
