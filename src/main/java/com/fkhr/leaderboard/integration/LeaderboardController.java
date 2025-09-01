@@ -1,24 +1,21 @@
-package com.fkhr.leaderboard.controller;
+package com.fkhr.leaderboard.integration;
 
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.service.LeaderboardService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.TreeMap;
 
 @RestController
 @RequestMapping(value = "/leaderboard", produces = MediaType.APPLICATION_JSON_VALUE)
 public class LeaderboardController {
     private final LeaderboardService leaderboardService;
 
-    public LeaderboardController(LeaderboardService leaderboardService) {
+    public LeaderboardController(
+            LeaderboardService leaderboardService) {
         this.leaderboardService = leaderboardService;
     }
 
@@ -26,5 +23,12 @@ public class LeaderboardController {
     public ResponseEntity getTopNLeaderboard(@PathVariable int count){
         List<Player> result = leaderboardService.getTopNPlayers(count);
         return new ResponseEntity(result, HttpStatus.OK);
+    }
+
+    @GetMapping("/range")
+    public ResponseEntity getLeaderboardInRangeOfScore(@RequestParam(defaultValue = "0") int minScore,
+                                              @RequestParam(defaultValue = "0") int maxScore){
+        List<Player> result = leaderboardService.getPlayersByRangeOfScore(minScore, maxScore);
+        return new  ResponseEntity(result, HttpStatus.OK);
     }
 }

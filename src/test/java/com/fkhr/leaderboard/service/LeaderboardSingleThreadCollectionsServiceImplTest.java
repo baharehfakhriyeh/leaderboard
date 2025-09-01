@@ -8,16 +8,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.management.InstanceNotFoundException;
+
 import java.util.List;
 
-class LeaderboardServiceImplTest {
-    private PlayerServiceImpl playerService;
+class LeaderboardSingleThreadCollectionsServiceImplTest {
+    private PlayerSingleThreadCollectionsServiceImpl playerService;
     private LeaderboardService leaderboardService;
 
     @BeforeEach
     public void setUp() throws InstanceNotFoundException {
-        playerService = new PlayerServiceImpl();
-        leaderboardService = new LeaderboardServiceImpl(playerService);
+        playerService = new PlayerSingleThreadCollectionsServiceImpl();
+        leaderboardService = new LeaderboardSingleThreadCollectionsServiceImpl(playerService);
         //fillDataSet();
     }
 
