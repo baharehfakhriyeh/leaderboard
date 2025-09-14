@@ -1,9 +1,10 @@
-package com.fkhr.leaderboard.integration;
+package com.fkhr.leaderboard.controller;
 
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.service.PlayerService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,11 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import javax.management.InstanceNotFoundException;
 
 @RestController()
-@RequestMapping(value = "/players", produces = MediaType.APPLICATION_JSON_VALUE)
-public class PlayerController {
+@RequestMapping(value = "/single-thread/players", produces = MediaType.APPLICATION_JSON_VALUE)
+public class PlayerSingleThreadController {
     private final PlayerService playerService;
 
-    public PlayerController(PlayerService playerService) {
+    public PlayerSingleThreadController(@Qualifier("player_single_thread") PlayerService playerService) {
         this.playerService = playerService;
     }
 

@@ -1,8 +1,7 @@
-package com.fkhr.leaderboard.integration;
+package com.fkhr.leaderboard.controller;
 
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.service.LeaderboardService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,12 +10,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/single-thread/leaderboard", produces = MediaType.APPLICATION_JSON_VALUE)
-public class LeaderboardSingleThreadController {
+@RequestMapping(value = "/leaderboard", produces = MediaType.APPLICATION_JSON_VALUE)
+public class LeaderboardController {
     private final LeaderboardService leaderboardService;
 
-    public LeaderboardSingleThreadController(
-            @Qualifier("leaderboard_single_thread") LeaderboardService leaderboardService) {
+    public LeaderboardController(
+            LeaderboardService leaderboardService) {
         this.leaderboardService = leaderboardService;
     }
 

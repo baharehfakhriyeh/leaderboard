@@ -1,4 +1,4 @@
-package com.fkhr.leaderboard.integration;
+package com.fkhr.leaderboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fkhr.leaderboard.service.PlayerService;
@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
-class LeaderboardSingleThreadControllerITest {
+class LeaderboardControllerITest {
     @Autowired
     MockMvc mockMvc;
     @Autowired
@@ -50,7 +50,7 @@ class LeaderboardSingleThreadControllerITest {
         ResultActions resultActions = mockMvc.perform(
                 MockMvcRequestBuilders.get("/leaderboard/top/" + count)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-        );
+                        );
         resultActions
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -74,9 +74,9 @@ class LeaderboardSingleThreadControllerITest {
         String maxScore = "80";
         ResultActions resultActions = mockMvc.perform(
                 MockMvcRequestBuilders.get("/leaderboard/range")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .queryParam("minScore", minScore)
-                        .queryParam("maxScore", maxScore));
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .queryParam("minScore", minScore)
+                .queryParam("maxScore", maxScore));
         resultActions
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -87,7 +87,7 @@ class LeaderboardSingleThreadControllerITest {
     void givenMultipleThreads_whenGetLeaderboardInRangeOfScore_thenReturnPlayerListFromEachThread() throws InterruptedException {
         callAsMultiThread(param -> {
             try {
-                givenRange_whenGetLeaderboardInRangeOfScore_thenReturnPlayerListInThatRange();
+                 givenRange_whenGetLeaderboardInRangeOfScore_thenReturnPlayerListInThatRange();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
