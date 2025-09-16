@@ -3,18 +3,20 @@ package com.fkhr.leaderboard.service;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
+import com.fkhr.leaderboard.utils.CustomError;
+import com.fkhr.leaderboard.utils.CustomException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceNotFoundException;
+import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Service("leaderboard_thread_safe")
-@Primary
+@Service
 public class LeaderboardServiceImpl implements LeaderboardService {
     private static ConcurrentSkipListMap<Integer, LinkedList<Player>> leaderboardPlayers;
 
@@ -30,6 +32,37 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         setLeaderboardPlayers();
     }
 
+
+    @Override
+    public void updateLeaderboard(Player player) {
+        if (player == null) {
+            throw new InvalidParameterException();
+        }
+        removePlayerById(player.getId());
+        LinkedList<Player> players = leaderboardPlayers.getOrDefault(player.getScore(), null);
+        if (players == null) {
+            players = new LinkedList<>();
+            players.addLast(player);
+            leaderboardPlayers.put(player.getScore(), players);
+        }
+        else {
+            Iterator<Player> playerIterator = players.iterator();
+            Player tempPlayer;
+            boolean existPlayer = false;
+            while (playerIterator.hasNext()) {
+                tempPlayer = playerIterator.next();
+                if (tempPlayer.getId() == player.getId()) {
+                    tempPlayer.setScore(player.getScore());
+                    existPlayer = true;
+                    break;
+                }
+            }
+            if(!existPlayer){
+                players.add(player);
+            }
+        }
+    }
+
     @Override
     public List<Player> getTopNPlayers(int count) {
         List<Player> playerList = new ArrayList<>();
@@ -37,7 +70,7 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         Iterator<LinkedList<Player>> leaderboardIt = leaderboardPlayers.values().iterator();
         while (leaderboardIt.hasNext()) {
             Iterator<Player> playersIterator = leaderboardIt.next().iterator();
-            while (playersIterator.hasNext()){
+            while (playersIterator.hasNext()) {
                 playerList.add(playersIterator.next());
                 counter.decrementAndGet();
                 if (counter.intValue() <= 0) {
@@ -62,6 +95,27 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         List<Player> players = new ArrayList<>();
         subMapLeaderboard.values().forEach(v -> players.addAll(v));
         return players;
+    }
+
+    @Override
+    public Optional<Player> getPlayerScoreById(long id) {
+        Optional<Player> player = leaderboardPlayers.values().stream().flatMap(item -> item.stream())
+                .filter(p -> p.getId() == id).findFirst();
+        return player;
+    }
+
+    @Override
+    public void removePlayerById(long id) {
+        Iterator<Map.Entry<Integer, LinkedList<Player>>> iterator = leaderboardPlayers.entrySet().iterator();
+        boolean result = false;
+        while (iterator.hasNext()){
+            Map.Entry<Integer, LinkedList<Player>> entry = iterator.next();
+            result =  entry.getValue().removeIf(player -> player.getId() == id);
+            if(result && entry.getValue().isEmpty()){
+                leaderboardPlayers.remove(entry.getKey());
+                return;
+            }
+        }
     }
 
     private synchronized void setLeaderboardPlayers() {

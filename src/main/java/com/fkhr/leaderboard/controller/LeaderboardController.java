@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/leaderboard", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -31,4 +32,11 @@ public class LeaderboardController {
         List<Player> result = leaderboardService.getPlayersByRangeOfScore(minScore, maxScore);
         return new  ResponseEntity(result, HttpStatus.OK);
     }
+
+    @GetMapping("/player/{id}")
+    public ResponseEntity getPlayerScoreById(@PathVariable long id){
+         Player player = leaderboardService.getPlayerScoreById(id).orElse(null);
+         return new ResponseEntity(player, HttpStatus.OK);
+    }
+
 }

@@ -1,5 +1,8 @@
 package com.fkhr.leaderboard.model;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Objects;
 
 public class Player {
@@ -50,5 +53,15 @@ public class Player {
 
     public void setScore(int score) {
         this.score = score;
+    }
+
+    @Override
+    public String toString() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

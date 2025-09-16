@@ -1,26 +1,28 @@
 package com.fkhr.leaderboard.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
+import com.fkhr.leaderboard.utils.CustomError;
+import com.fkhr.leaderboard.utils.CustomException;
+import com.fkhr.leaderboard.websocket.LeaderboardClient;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceNotFoundException;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service("player_thread_safe")
-@Primary
+@Service
 public class PlayerServiceImpl implements PlayerService {
     public static ConcurrentHashMap<Long, Player> players;
-
+    private final LeaderboardClient leaderboardClient;
     static {
         players = new ConcurrentHashMap<>();
     }
 
-    public PlayerServiceImpl() {
+    public PlayerServiceImpl(LeaderboardClient leaderboardClient) {
+        this.leaderboardClient = leaderboardClient;
     }
 
     @Override
@@ -33,6 +35,12 @@ public class PlayerServiceImpl implements PlayerService {
 
     @Override
     public Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException {
+        Player player = updatePlayerScore(updatePlayerScoreDto);
+        updateScoreInLeaderboard(player);
+        return player;
+    }
+
+    private Player updatePlayerScore(UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException {
         Player player = new Player();
         BeanUtils.copyProperties(updatePlayerScoreDto, player);
         if (players.containsKey(updatePlayerScoreDto.id())) {
@@ -42,6 +50,22 @@ public class PlayerServiceImpl implements PlayerService {
             return tempPlayer;
         } else {
             throw new InstanceNotFoundException();
+        }
+    }
+
+    private void updateScoreInLeaderboard(Player player) {
+        try {
+            if (player == null) {
+                return;
+            }
+            ObjectMapper objectMapper = new ObjectMapper();
+            leaderboardClient.connect();
+            if(leaderboardClient.isConnected()) {
+                leaderboardClient.sendMessage(objectMapper.writeValueAsString(player));
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+           // throw new CustomException(CustomError.LEADERBOARD_MAY_NOT_UPDATED, e);
         }
     }
 

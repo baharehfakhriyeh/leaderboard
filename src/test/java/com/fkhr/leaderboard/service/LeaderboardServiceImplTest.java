@@ -3,6 +3,7 @@ package com.fkhr.leaderboard.service;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
+import com.fkhr.leaderboard.websocket.LeaderboardClient;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,12 +14,25 @@ import java.util.List;
 class LeaderboardServiceImplTest {
     private PlayerServiceImpl playerService;
     private LeaderboardService leaderboardService;
+    private LeaderboardClient leaderboardClient;
 
     @BeforeEach
     public void setUp() throws InstanceNotFoundException {
-        playerService = new PlayerServiceImpl();
+        leaderboardClient = new LeaderboardClient();
+        playerService = new PlayerServiceImpl(leaderboardClient);
         leaderboardService = new LeaderboardServiceImpl(playerService);
         //fillDataSet();
+    }
+
+    @Test
+    void givenPlayer_whenUpdateLeaderboard_thenPlayerExistInLeaderboard() {
+        Player player = new Player(1, "Bahareh", 50);
+
+        leaderboardService.updateLeaderboard(player);
+
+        Player result = leaderboardService.getPlayerScoreById(player.getId()).orElse(null);
+        Assertions.assertThat(result).isNotNull();
+        Assertions.assertThat(result).isEqualTo(player);
     }
 
     @Test
@@ -49,6 +63,22 @@ class LeaderboardServiceImplTest {
         Assertions.assertThat(result.get(2).getId()).isEqualTo(5);
     }
 
+    @Test
+    void givenId_whenGetPlayerScoreById_thenReturnPlayer() {
+        long id = 3;
+        Player player = leaderboardService.getPlayerScoreById(id).orElse(null);
+        Assertions.assertThat(player).isNotNull();
+        Assertions.assertThat(player.getId()).isEqualTo(id);
+        System.out.println(player);
+    }
+
+    @Test
+    void givenId_whenGetPlayerScoreById_thenReturnNull() {
+        long id = 30;
+        Player player = leaderboardService.getPlayerScoreById(id).orElse(null);
+        Assertions.assertThat(player).isNull();
+    }
+
     private void fillDataSet() throws InstanceNotFoundException {
         playerService.create(new CreatePlayerDto(1, "Bahareh"));
         playerService.create(new CreatePlayerDto(2, "Mark"));
@@ -63,6 +93,7 @@ class LeaderboardServiceImplTest {
         playerService.updateScore(new UpdatePlayerScoreDto(5, 50));
         playerService.updateScore(new UpdatePlayerScoreDto(6, 90));
     }
+
 
 
 }
