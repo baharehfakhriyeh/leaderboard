@@ -29,11 +29,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     private ResponseEntity<Object> buildResponseEntity(CustomException exception) {
+        exception.printStackTrace();
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode jsonNodes = objectMapper.createObjectNode();
         jsonNodes.put("message", exception.getMessage());
         jsonNodes.put("code", exception.getCode());
-        jsonNodes.put("cause", exception.getCause().toString());
+        jsonNodes.put("cause", exception.getCause() != null ? exception.getCause().toString() : "");
         jsonNodes.put("time", exception.getTime().toString());
         return new ResponseEntity(jsonNodes, exception.getStatus());
     }

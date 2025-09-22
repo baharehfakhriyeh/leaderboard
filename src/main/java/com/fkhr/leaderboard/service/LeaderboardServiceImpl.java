@@ -3,8 +3,10 @@ package com.fkhr.leaderboard.service;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
+import com.fkhr.leaderboard.properties.LeaderboardProperties;
 import com.fkhr.leaderboard.utils.CustomError;
 import com.fkhr.leaderboard.utils.CustomException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class LeaderboardServiceImpl implements LeaderboardService {
+    private LeaderboardProperties leaderboardProperties;
     private static ConcurrentSkipListMap<Integer, LinkedList<Player>> leaderboardPlayers;
 
     static {
@@ -26,10 +29,10 @@ public class LeaderboardServiceImpl implements LeaderboardService {
 
     private final PlayerService playerService;
 
-    public LeaderboardServiceImpl(PlayerService playerService) throws InstanceNotFoundException {
+    public LeaderboardServiceImpl(LeaderboardProperties leaderboardProperties, PlayerService playerService) throws InstanceNotFoundException {
+        this.leaderboardProperties = leaderboardProperties;
         this.playerService = playerService;
-        this.fillDataSet();
-        setLeaderboardPlayers();
+        setLeaderboardPlayers(leaderboardProperties.maxPlayers());
     }
 
 
@@ -101,6 +104,9 @@ public class LeaderboardServiceImpl implements LeaderboardService {
     public Optional<Player> getPlayerScoreById(long id) {
         Optional<Player> player = leaderboardPlayers.values().stream().flatMap(item -> item.stream())
                 .filter(p -> p.getId() == id).findFirst();
+        if(!player.isPresent()){
+            throw new CustomException(CustomError.PLAYER_NOT_EXIST_IN_LEADERBOARD);
+        }
         return player;
     }
 
@@ -118,41 +124,18 @@ public class LeaderboardServiceImpl implements LeaderboardService {
         }
     }
 
-    private synchronized void setLeaderboardPlayers() {
+    private synchronized void setLeaderboardPlayers(int count) {
         if (leaderboardPlayers.isEmpty()) {
-            ConcurrentHashMap<Long, Player> playersMap = (ConcurrentHashMap<Long, Player>) playerService.getPlayers();
-            playersMap.forEach(
-                    (k, v) -> {
-                        if (leaderboardPlayers.containsKey(v.getScore())) {
-                            leaderboardPlayers.get(v.getScore()).add(v);
+            List<Player> playersList = playerService.getNTopScorePlayers(count);
+            playersList.forEach(
+                    (player) -> {
+                        if (leaderboardPlayers.containsKey(player.getScore())) {
+                            leaderboardPlayers.get(player.getScore()).add(player);
                         } else {
-                            leaderboardPlayers.put(v.getScore(), new LinkedList<>(List.of(v)));
+                            leaderboardPlayers.put(player.getScore(), new LinkedList<>(List.of(player)));
                         }
                     }
             );
-        }
-    }
-
-    /**
-     * Initialisation. //todo: remove if it became a real project.
-     *
-     * @throws InstanceNotFoundException
-     */
-    public synchronized void fillDataSet() throws InstanceNotFoundException {
-        List<Player> players = playerService.getPlayers().values().stream().toList();
-        if (players.isEmpty()) {
-            playerService.create(new CreatePlayerDto(1, "Bahareh"));
-            playerService.create(new CreatePlayerDto(2, "Mark"));
-            playerService.create(new CreatePlayerDto(3, "Dorna"));
-            playerService.create(new CreatePlayerDto(4, "Arman"));
-            playerService.create(new CreatePlayerDto(5, "John"));
-            playerService.create(new CreatePlayerDto(6, "Anna"));
-            playerService.updateScore(new UpdatePlayerScoreDto(1, 50));
-            playerService.updateScore(new UpdatePlayerScoreDto(2, 20));
-            playerService.updateScore(new UpdatePlayerScoreDto(3, 30));
-            playerService.updateScore(new UpdatePlayerScoreDto(4, 70));
-            playerService.updateScore(new UpdatePlayerScoreDto(5, 50));
-            playerService.updateScore(new UpdatePlayerScoreDto(6, 90));
         }
     }
 }

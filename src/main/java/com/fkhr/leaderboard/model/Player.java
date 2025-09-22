@@ -2,19 +2,26 @@ package com.fkhr.leaderboard.model;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.*;
 
 import java.util.Objects;
 
+@Entity
 public class Player {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    @Column(unique = true)
+    private String identifier;
     private String name;
     private int score;
 
     public Player() {
     }
 
-    public Player(long id, String name, int score) {
+    public Player(long id, String identifier, String name, int score) {
         this.id = id;
+        this.identifier = identifier;
         this.name = name;
         this.score = score;
     }
@@ -23,12 +30,12 @@ public class Player {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Player player)) return false;
-        return id == player.id && score == player.score && Objects.equals(name, player.name);
+        return id == player.id && score == player.score && Objects.equals(identifier, player.identifier) && Objects.equals(name, player.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, score);
+        return Objects.hash(id, identifier, name, score);
     }
 
     public long getId() {
@@ -37,6 +44,14 @@ public class Player {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public String getName() {

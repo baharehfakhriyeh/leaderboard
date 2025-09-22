@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: leaderboard
+  profiles:
+    active: dev
+server:
+  port: 9091
+leaderboard:
+  max-players: 5
+

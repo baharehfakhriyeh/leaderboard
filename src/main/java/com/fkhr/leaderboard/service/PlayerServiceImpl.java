@@ -4,24 +4,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
+import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomError;
 import com.fkhr.leaderboard.utils.CustomException;
 import com.fkhr.leaderboard.websocket.LeaderboardClient;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import javax.management.InstanceNotFoundException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PlayerServiceImpl implements PlayerService {
-    public static ConcurrentHashMap<Long, Player> players;
+    private final PlayerRepository playerRepository;
     private final LeaderboardClient leaderboardClient;
-    static {
-        players = new ConcurrentHashMap<>();
-    }
 
-    public PlayerServiceImpl(LeaderboardClient leaderboardClient) {
+    public PlayerServiceImpl(PlayerRepository playerRepository, LeaderboardClient leaderboardClient) {
+        this.playerRepository = playerRepository;
         this.leaderboardClient = leaderboardClient;
     }
 
@@ -29,31 +32,31 @@ public class PlayerServiceImpl implements PlayerService {
     public Player create(CreatePlayerDto createPlayerDto) {
         Player player = new Player();
         BeanUtils.copyProperties(createPlayerDto, player);
-        players.put(player.getId(), player);
+        checkPlayerNotExist(player.getIdentifier());
+        player = playerRepository.save(player);
         return player;
     }
 
     @Override
-    public Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException {
-        Player player = updatePlayerScore(updatePlayerScoreDto);
-        updateScoreInLeaderboard(player);
-        return player;
-    }
-
-    private Player updatePlayerScore(UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException {
-        Player player = new Player();
-        BeanUtils.copyProperties(updatePlayerScoreDto, player);
-        if (players.containsKey(updatePlayerScoreDto.id())) {
-            Player tempPlayer = players.get(player.getId());
-            tempPlayer.setScore(player.getScore());
-            players.put(tempPlayer.getId(), tempPlayer);
-            return tempPlayer;
-        } else {
-            throw new InstanceNotFoundException();
+    @Transactional
+    public Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto) {
+        Optional<Player> player = playerRepository.findById(updatePlayerScoreDto.id());
+        if(player.isPresent()){
+            int result = playerRepository.updatePlayerById(updatePlayerScoreDto.id(), updatePlayerScoreDto.score());
+            if(result < 1){
+                throw new CustomException(CustomError.PLAYER_NOT_UPDATED);
+            }
         }
+        else {
+            throw new CustomException(CustomError.PLAYER_NOT_FOUND);
+        }
+        Player resultPlayer = player.get();
+        resultPlayer.setScore(updatePlayerScoreDto.score());
+        updateScoreInLeaderboard(resultPlayer);
+        return resultPlayer;
     }
 
-    private void updateScoreInLeaderboard(Player player) {
+    void updateScoreInLeaderboard(Player player) {
         try {
             if (player == null) {
                 return;
@@ -70,17 +73,32 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public ConcurrentHashMap<Long, Player> getPlayers() {
+    public List<Player> getPlayers() {
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "id"));
+        List<Player> players = playerRepository.findAll(sort);
         return players;
     }
 
     @Override
-    public Player getPlayerById(long id) throws InstanceNotFoundException {
-        if (players.containsKey(id))
-            return players.get(id);
-        else
-            throw new InstanceNotFoundException();
+    public List<Player> getNTopScorePlayers(int count) {
+        Pageable pageable = PageRequest.of(0, count, Sort.by(Sort.Direction.DESC, "score"));
+        List<Player> result = playerRepository.findAllByOrderByScoreDesc(pageable);
+        return result;
     }
 
+    @Override
+    public Player getPlayerById(long id){
+        Optional<Player> player = playerRepository.findById(id);
+        if (player.isPresent())
+            return player.get();
+        else
+            throw new CustomException(CustomError.PLAYER_NOT_FOUND);
+    }
 
+    private void checkPlayerNotExist(String identifier) {
+        Optional<Player> playerOptional = playerRepository.findPlayerByIdentifier(identifier);
+        if(playerOptional.isPresent()){
+            throw new CustomException(CustomError.PLAYER_ALREADY_EXIST);
+        }
+    }
 }

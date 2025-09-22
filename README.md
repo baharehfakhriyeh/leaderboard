@@ -5,7 +5,7 @@ It can be used in other projects as a submodule to manage scoring of any entitie
 # Features
 - Leaderboard scores get updated with **websocket** when player score is updated.
 - **Concurrency** have already considered. It can be tested in available **integration test** classes.
-- Several **concurrent collections and maps** are used to manage data.
+- Player data is saved in **PostgreSQL** while Leaderboard data is managed in a **concurrent map**.
 
 # Future improvements
 - Implement UI with **React**.
