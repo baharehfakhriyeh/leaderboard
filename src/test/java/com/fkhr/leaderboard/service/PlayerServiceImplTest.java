@@ -5,15 +5,12 @@ import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomException;
-import com.fkhr.leaderboard.websocket.LeaderboardClient;
+import com.fkhr.leaderboard.websocket.basic.LeaderboardClient;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -21,7 +18,6 @@ import javax.management.InstanceNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ExtendWith(MockitoExtension.class)
 class PlayerServiceImplTest {

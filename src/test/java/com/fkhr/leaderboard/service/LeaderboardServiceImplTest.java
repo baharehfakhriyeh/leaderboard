@@ -5,7 +5,7 @@ import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.properties.LeaderboardProperties;
 import com.fkhr.leaderboard.repository.PlayerRepository;
-import com.fkhr.leaderboard.websocket.LeaderboardClient;
+import com.fkhr.leaderboard.websocket.basic.LeaderboardClient;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
