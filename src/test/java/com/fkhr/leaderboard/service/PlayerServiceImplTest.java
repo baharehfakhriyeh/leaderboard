@@ -5,7 +5,6 @@ import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomException;
-import com.fkhr.leaderboard.websocket.basic.LeaderboardClient;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,15 +23,12 @@ class PlayerServiceImplTest {
     PlayerServiceImpl playerService;
     @Mock
     PlayerRepository playerRepository;
-    @Mock
-    LeaderboardClient leaderboardClient;
     CreatePlayerDto createPlayerDto;
     Player player;
 
     @BeforeEach
     public void setUp() {
-        leaderboardClient = new LeaderboardClient();
-        playerService = new PlayerServiceImpl(playerRepository, leaderboardClient);
+        playerService = new PlayerServiceImpl(playerRepository);
         createPlayerDto = new CreatePlayerDto(null,"Baharh");
         player = new Player(1, null, "Bahareh", 0);
     }

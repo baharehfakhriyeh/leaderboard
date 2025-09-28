@@ -5,7 +5,6 @@ import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.properties.LeaderboardProperties;
 import com.fkhr.leaderboard.repository.PlayerRepository;
-import com.fkhr.leaderboard.websocket.basic.LeaderboardClient;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +22,11 @@ class LeaderboardServiceImplTest {
     @Mock
     private PlayerRepository playerRepository;
     private LeaderboardService leaderboardService;
-    private LeaderboardClient leaderboardClient;
     private LeaderboardProperties leaderboardProperties;
 
     @BeforeEach
     public void setUp() throws InstanceNotFoundException {
-        leaderboardClient = new LeaderboardClient();
-        playerService = new PlayerServiceImpl(playerRepository, leaderboardClient);
+        playerService = new PlayerServiceImpl(playerRepository);
         leaderboardProperties = new LeaderboardProperties(5);
         leaderboardService = new LeaderboardServiceImpl(leaderboardProperties, playerService);
     }

@@ -1,9 +1,10 @@
 package com.fkhr.leaderboard.websocket;
 
-import com.fkhr.leaderboard.model.Player;
-import org.springframework.messaging.simp.stomp.*;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaders;
+import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 
-import java.lang.reflect.Type;
 import java.util.concurrent.CountDownLatch;
 
 public class PlayerUpdateScoreStompSessionHandler extends StompSessionHandlerAdapter {
@@ -16,26 +17,10 @@ public class PlayerUpdateScoreStompSessionHandler extends StompSessionHandlerAda
     }
     @Override
     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-        session.subscribe("/topic/updated-score", this /*new StompFrameHandler() {
-            @Override
-            public Type getPayloadType(StompHeaders headers) {
-                return String.class; // matches JSON response
-            }
-
-            @Override
-            public void handleFrame(StompHeaders headers, Object payload) {
-                System.out.println("Received from leaderboard: " + payload);
-                latch.countDown();
-            }
-        }*/);
+        session.subscribe("/topic/updated-score", this );
 
         session.send("/leaderboard/update-score", message);
     }
-
-  /*  @Override
-    public Type getPayloadType(StompHeaders headers) {
-        return String.class; // matches JSON response
-    }*/
 
     @Override
     public void handleFrame(StompHeaders headers, Object payload) {
