@@ -3,6 +3,8 @@ package com.fkhr.leaderboard.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
+import com.fkhr.leaderboard.kafka.KafkaProducer;
+import com.fkhr.leaderboard.kafka.Topics;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomError;
@@ -14,12 +16,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandler;
 import org.springframework.stereotype.Service;
-import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
@@ -30,10 +30,13 @@ import java.util.concurrent.*;
 @Service
 public class PlayerServiceImpl implements PlayerService {
     private final PlayerRepository playerRepository;
-    private StompSession session;
+  //  private final StompSession session;
+    private final KafkaProducer kafkaProducer;
 
-    public PlayerServiceImpl(PlayerRepository playerRepository) {
+    public PlayerServiceImpl(PlayerRepository playerRepository, /*StompSession session, */KafkaProducer kafkaProducer) {
         this.playerRepository = playerRepository;
+     //   this.session = session;
+        this.kafkaProducer = kafkaProducer;
     }
 
     @Override
@@ -65,9 +68,9 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     /**
-     * Connects to stomp
+     * Sends score to leaderboard
      */
-    void updateScoreInLeaderboard(Player player){
+    private void updateScoreInLeaderboard(Player player){
 
         try {
             if (player == null) {
@@ -75,7 +78,8 @@ public class PlayerServiceImpl implements PlayerService {
             }
             ObjectMapper objectMapper = new ObjectMapper();
             String playerStr = objectMapper.writeValueAsString(player);
-            sendMessage(playerStr);
+            //sendWebsocketMessage(playerStr);//todo: read from config how to send it, websocket or kafka
+            sendKafkaMessage(playerStr);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,7 +87,18 @@ public class PlayerServiceImpl implements PlayerService {
         }
     }
 
-    private static void sendMessage(String message) throws InterruptedException, ExecutionException, TimeoutException {
+    private void sendKafkaMessage(String message) throws InterruptedException, ExecutionException, TimeoutException {
+        kafkaProducer.send(Topics.UPDATE_SCORE, message);
+    }
+
+    /**
+     * Sends directly to leaderboard service via websocket.
+     * @param message
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws TimeoutException
+     */
+    private void sendWebsocketMessage(String message) throws InterruptedException, ExecutionException, TimeoutException {
         long timout = 30;//todo: read from config
         CountDownLatch latch = new CountDownLatch(1);
         WebSocketStompClient stompClient =new WebSocketStompClient(new StandardWebSocketClient());
@@ -130,11 +145,11 @@ public class PlayerServiceImpl implements PlayerService {
         }
     }
 
-    @PreDestroy
+   /* @PreDestroy
     public void shutdown() {
         if (session != null && session.isConnected()) {
             session.disconnect();
             System.out.println("WebSocket session closed on shutdown");
         }
-    }
+    }*/
 }

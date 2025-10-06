@@ -2,6 +2,7 @@ package com.fkhr.leaderboard.service;
 
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
+import com.fkhr.leaderboard.kafka.KafkaProducer;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomException;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.stomp.StompSession;
 
 import javax.management.InstanceNotFoundException;
 import java.util.ArrayList;
@@ -23,12 +25,16 @@ class PlayerServiceImplTest {
     PlayerServiceImpl playerService;
     @Mock
     PlayerRepository playerRepository;
+    @Mock
+    StompSession session;
+    @Mock
+    KafkaProducer kafkaProducer;
     CreatePlayerDto createPlayerDto;
     Player player;
 
     @BeforeEach
     public void setUp() {
-        playerService = new PlayerServiceImpl(playerRepository);
+        playerService = new PlayerServiceImpl(playerRepository, kafkaProducer);
         createPlayerDto = new CreatePlayerDto(null,"Baharh");
         player = new Player(1, null, "Bahareh", 0);
     }

@@ -2,6 +2,7 @@ package com.fkhr.leaderboard.service;
 
 import com.fkhr.leaderboard.dto.player.CreatePlayerDto;
 import com.fkhr.leaderboard.dto.player.UpdatePlayerScoreDto;
+import com.fkhr.leaderboard.kafka.KafkaProducer;
 import com.fkhr.leaderboard.model.Player;
 import com.fkhr.leaderboard.properties.LeaderboardProperties;
 import com.fkhr.leaderboard.repository.PlayerRepository;
@@ -20,13 +21,15 @@ import java.util.UUID;
 class LeaderboardServiceImplTest {
     private PlayerServiceImpl playerService;
     @Mock
+    private KafkaProducer kafkaProducer;
+    @Mock
     private PlayerRepository playerRepository;
     private LeaderboardService leaderboardService;
     private LeaderboardProperties leaderboardProperties;
 
     @BeforeEach
     public void setUp() throws InstanceNotFoundException {
-        playerService = new PlayerServiceImpl(playerRepository);
+        playerService = new PlayerServiceImpl(playerRepository, kafkaProducer);
         leaderboardProperties = new LeaderboardProperties(5);
         leaderboardService = new LeaderboardServiceImpl(leaderboardProperties, playerService);
     }
