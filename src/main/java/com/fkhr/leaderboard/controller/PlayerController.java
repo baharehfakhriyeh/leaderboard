@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
+import java.util.List;
 
 @RestController()
 @RequestMapping(value = "/players", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -30,6 +31,13 @@ public class PlayerController {
     public ResponseEntity updatePlayerScore(@RequestBody UpdatePlayerScoreDto updatePlayerScoreDto) throws InstanceNotFoundException {
         Player player = playerService.updateScore(updatePlayerScoreDto);
         return new ResponseEntity(player, HttpStatus.OK);
+    }
+
+    @GetMapping()
+    public ResponseEntity getPlayers(@RequestParam(defaultValue = "1") int page,
+                                     @RequestParam(defaultValue = "10") int size){
+        List<Player> playerList = playerService.getPlayers(page, size);
+        return new ResponseEntity(playerList, HttpStatus.OK);
     }
 
 }

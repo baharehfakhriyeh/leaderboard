@@ -10,7 +10,6 @@ import com.fkhr.leaderboard.repository.PlayerRepository;
 import com.fkhr.leaderboard.utils.CustomError;
 import com.fkhr.leaderboard.utils.CustomException;
 import com.fkhr.leaderboard.websocket.PlayerUpdateScoreStompSessionHandler;
-import jakarta.annotation.PreDestroy;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
@@ -30,12 +29,12 @@ import java.util.concurrent.*;
 @Service
 public class PlayerServiceImpl implements PlayerService {
     private final PlayerRepository playerRepository;
-  //  private final StompSession session;
+    //  private final StompSession session;
     private final KafkaProducer kafkaProducer;
 
     public PlayerServiceImpl(PlayerRepository playerRepository, /*StompSession session, */KafkaProducer kafkaProducer) {
         this.playerRepository = playerRepository;
-     //   this.session = session;
+        //   this.session = session;
         this.kafkaProducer = kafkaProducer;
     }
 
@@ -52,13 +51,12 @@ public class PlayerServiceImpl implements PlayerService {
     @Transactional
     public Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto) {
         Optional<Player> player = playerRepository.findById(updatePlayerScoreDto.id());
-        if(player.isPresent()){
+        if (player.isPresent()) {
             int result = playerRepository.updatePlayerById(updatePlayerScoreDto.id(), updatePlayerScoreDto.score());
-            if(result < 1){
+            if (result < 1) {
                 throw new CustomException(CustomError.PLAYER_NOT_UPDATED);
             }
-        }
-        else {
+        } else {
             throw new CustomException(CustomError.PLAYER_NOT_FOUND);
         }
         Player resultPlayer = player.get();
@@ -68,9 +66,9 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     /**
-     * Sends score to leaderboard
+     * Sends score to leaderboard via kafka
      */
-    private void updateScoreInLeaderboard(Player player){
+    private void updateScoreInLeaderboard(Player player) {
 
         try {
             if (player == null) {
@@ -92,7 +90,8 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     /**
-     * Sends directly to leaderboard service via websocket.
+     * Sends score to leaderboard service via websocket.
+     *
      * @param message
      * @throws InterruptedException
      * @throws ExecutionException
@@ -101,7 +100,7 @@ public class PlayerServiceImpl implements PlayerService {
     private void sendWebsocketMessage(String message) throws InterruptedException, ExecutionException, TimeoutException {
         long timout = 30;//todo: read from config
         CountDownLatch latch = new CountDownLatch(1);
-        WebSocketStompClient stompClient =new WebSocketStompClient(new StandardWebSocketClient());
+        WebSocketStompClient stompClient = new WebSocketStompClient(new StandardWebSocketClient());
         StompSessionHandler sessionHandler = new PlayerUpdateScoreStompSessionHandler(message, latch);//todo: set the handler as parameter
         stompClient.setMessageConverter(new StringMessageConverter());
         CompletableFuture<StompSession> future = stompClient.connectAsync("ws://localhost:9091/ws",//todo:read ip from config
@@ -123,6 +122,13 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
+    public List<Player> getPlayers(int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC,"id"));
+        List<Player> players = playerRepository.findAll(pageable).getContent();
+        return players;
+    }
+
+    @Override
     public List<Player> getNTopScorePlayers(int count) {
         Pageable pageable = PageRequest.of(0, count, Sort.by(Sort.Direction.DESC, "score"));
         List<Player> result = playerRepository.findAllByOrderByScoreDesc(pageable);
@@ -130,7 +136,7 @@ public class PlayerServiceImpl implements PlayerService {
     }
 
     @Override
-    public Player getPlayerById(long id){
+    public Player getPlayerById(long id) {
         Optional<Player> player = playerRepository.findById(id);
         if (player.isPresent())
             return player.get();
@@ -140,7 +146,7 @@ public class PlayerServiceImpl implements PlayerService {
 
     private void checkPlayerNotExist(String identifier) {
         Optional<Player> playerOptional = playerRepository.findPlayerByIdentifier(identifier);
-        if(playerOptional.isPresent()){
+        if (playerOptional.isPresent()) {
             throw new CustomException(CustomError.PLAYER_ALREADY_EXIST);
         }
     }

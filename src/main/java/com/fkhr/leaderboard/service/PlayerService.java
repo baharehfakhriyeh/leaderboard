@@ -12,6 +12,7 @@ public interface PlayerService {
     Player create(CreatePlayerDto createPlayerDto);
     Player updateScore(UpdatePlayerScoreDto updatePlayerScoreDto);
     List<Player> getPlayers();
+    List<Player> getPlayers(int page, int size);
     List<Player> getNTopScorePlayers(int count);
     Player getPlayerById(long id);
 }
